@@ -5,3 +5,6 @@ pyvis==0.3.1
 networkx==3.1
 tqdm
 python-dotenv
+requests
+google-generativeai
+aiohttp

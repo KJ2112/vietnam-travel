@@ -20,13 +20,11 @@ pc = Pinecone(api_key=...)
 index = pc.Index(name)
 ```
 
-### 2. **OpenAI API Client Update**
-**Problem**: Old code used deprecated `openai.Embedding.create()` format
+### 2. **Gemini Chat Integration**
+**Context**: The project uses Gemini for generation (not OpenAI).
 **Solution**:
-- Migrated to `OpenAI(api_key=...)` client initialization
-- Updated embeddings: `client.embeddings.create(model=..., input=...)`
-- Updated chat: `client.chat.completions.create(model=..., messages=...)`
-- Used modern models: `text-embedding-3-small` and `gpt-4o-mini`
+- Standardized on `google-generativeai` with `gemini-2.5-flash` for chat.
+- Improved system prompt for clearer, structured outputs with internal reasoning guidance.
 
 ### 3. **Neo4j Query Optimization**
 **Problem**: Basic queries without proper relationship traversal
@@ -93,10 +91,10 @@ Added user-friendly features:
 - `quit/exit` - Graceful shutdown
 
 ### 6. **Search Summary Function**
-Provides quick overview of top results:
+Provides quick overview of top results (vector + graph):
 ```python
-def search_summary(vector_results):
-    # Returns concise summary of top 3 results
+def search_summary(vector_results, graph_results, max_items=5):
+    # Returns concise summary of top items from semantic matches and graph nodes
     # Useful for debugging and transparency
 ```
 
@@ -113,15 +111,6 @@ def search_summary(vector_results):
 - Provides metadata footer with search stats
 
 ---
-
-## 📊 Performance Metrics
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Average Response Time | ~8s | ~3s | 62% faster |
-| API Calls (repeated queries) | 3 | 0 | 100% reduction |
-| Context Richness | Low | High | 3x more data |
-| Answer Quality (subjective) | 6/10 | 9/10 | 50% better |
 
 ---
 
@@ -153,50 +142,7 @@ def search_summary(vector_results):
 - Progress indicators
 - Colored output (via emojis)
 
----
-
-## 🔮 Future Enhancements (Not Implemented)
-
-### 1. **Async Processing**
-```python
-import asyncio
-import aiohttp
-
-async def parallel_search(query):
-    vector_task = asyncio.create_task(vector_search(query))
-    graph_task = asyncio.create_task(graph_search(query))
-    return await asyncio.gather(vector_task, graph_task)
-```
-
-**Benefit**: 30-40% faster for concurrent operations
-
-### 2. **Persistent Cache**
-Use Redis or disk-based cache:
-```python
-import redis
-cache = redis.Redis(host='localhost', port=6379)
-```
-
-### 3. **Query Expansion**
-Use LLM to expand user queries:
-```
-"romantic Vietnam" → ["romantic activities", "couple destinations", "honeymoon spots"]
-```
-
-### 4. **Re-ranking**
-Implement cross-encoder re-ranking after retrieval:
-```python
-from sentence_transformers import CrossEncoder
-reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
-```
-
-### 5. **Feedback Loop**
-Allow users to rate responses and fine-tune:
-```python
-def collect_feedback(query, answer, rating):
-    # Store in database
-    # Use for model fine-tuning
-```
+--
 
 ---
 
@@ -333,7 +279,7 @@ def test_pinecone_compatibility():
 ## 📚 References
 
 - [Pinecone v2 Migration Guide](https://docs.pinecone.io/)
-- [OpenAI API Documentation](https://platform.openai.com/docs)
+- [Google Generative AI (Gemini) Docs](https://ai.google.dev/)
 - [Neo4j Cypher Manual](https://neo4j.com/docs/cypher-manual/)
 - [RAG Best Practices](https://www.pinecone.io/learn/retrieval-augmented-generation/)
 

@@ -8,6 +8,8 @@ import json
 import requests
 import google.generativeai as genai
 from typing import List, Dict, Tuple
+import asyncio
+import aiohttp
 from pinecone import Pinecone
 from neo4j import GraphDatabase
 import config
@@ -80,6 +82,30 @@ class HybridTravelAssistant:
         except Exception as e:
             print(f"❌ Error creating embedding: {e}")
             return []
+
+    async def create_embedding_async(self, text: str) -> List[float]:
+        """Async embedding using aiohttp with cache."""
+        if text in self.embedding_cache:
+            return self.embedding_cache[text]
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{config.OLLAMA_BASE_URL}/api/embeddings",
+                    json={"model": config.OLLAMA_EMBEDDING_MODEL, "prompt": text},
+                    timeout=30
+                ) as resp:
+                    if resp.status == 200:
+                        result = await resp.json()
+                        embedding = result.get("embedding", [])
+                        if embedding:
+                            self.embedding_cache[text] = embedding
+                            return embedding
+                        else:
+                            return []
+                    else:
+                        return []
+        except Exception:
+            return []
     
     def vector_search(self, query: str, top_k: int = 5) -> List[Dict]:
         """Search Pinecone for similar vectors"""
@@ -88,6 +114,31 @@ class HybridTravelAssistant:
         # Create query embedding
         query_embedding = self.create_embedding(query)
         if not query_embedding:
+            return []
+
+    async def vector_search_async(self, query: str, top_k: int = 5) -> List[Dict]:
+        """Async-friendly vector search (async embed + sync query)."""
+        print(f"🔍 Searching vector database for: '{query}'")
+        query_embedding = await self.create_embedding_async(query)
+        if not query_embedding:
+            return []
+        # Run blocking index.query in a thread to avoid blocking the loop
+        loop = asyncio.get_running_loop()
+        try:
+            results = await loop.run_in_executor(
+                None,
+                lambda: self.index.query(vector=query_embedding, top_k=top_k, include_metadata=True)
+            )
+            matches = []
+            for match in results.matches:
+                matches.append({
+                    'id': match.id,
+                    'score': match.score,
+                    'metadata': match.metadata
+                })
+            print(f"   Found {len(matches)} similar results")
+            return matches
+        except Exception:
             return []
         
         try:
@@ -176,6 +227,23 @@ class HybridTravelAssistant:
             locations.add('Vietnam')
         
         return list(locations)
+
+    def search_summary(self, vector_results: List[Dict], graph_results: List[Dict], max_items: int = 5) -> str:
+        """Produce a brief summary of top vector hits and graph nodes."""
+        parts = []
+        # Vector summary
+        if vector_results:
+            parts.append("Top semantic matches:")
+            for r in vector_results[:max_items]:
+                name = r.get('metadata', {}).get('name', 'Unknown')
+                score = r.get('score', 0.0)
+                parts.append(f"- {name} (score {score:.2f})")
+        # Graph summary
+        if graph_results:
+            parts.append("Top graph nodes:")
+            for n in graph_results[:max_items]:
+                parts.append(f"- {n.get('name','Unknown')} ({n.get('type','N/A')})")
+        return "\n".join(parts)
     
     def build_context(self, query: str) -> Tuple[str, Dict]:
         """Build combined context from vector + graph search"""
@@ -236,6 +304,84 @@ class HybridTravelAssistant:
         }
         
         return context, metadata
+
+    async def build_context_async(self, query: str) -> Tuple[str, Dict]:
+        """Async version: parallelize embedding (for vector search) and a preliminary graph query from query text."""
+        print("\n" + "="*80)
+        print("🔄 Building hybrid context (async)...")
+        print("="*80)
+
+        # Preliminary locations from query only (fast)
+        prelim_locations = self.extract_locations(query, vector_results=[])
+
+        # Kick off async tasks: vector search and preliminary graph search
+        vector_task = asyncio.create_task(self.vector_search_async(query, top_k=config.TOP_K_RESULTS))
+
+        # Use to_thread for blocking graph_search so it's a coroutine (valid for create_task/gather)
+        graph_task = asyncio.to_thread(self.graph_search, prelim_locations)
+
+        vector_results, graph_results = await asyncio.gather(vector_task, graph_task)
+
+        # If vector results add new locations, attempt one more (merged) graph query
+        expanded_locations = set(prelim_locations)
+        for r in vector_results:
+            meta = r.get('metadata', {})
+            if 'city' in meta:
+                expanded_locations.add(meta['city'])
+            elif 'region' in meta:
+                expanded_locations.add(meta['region'])
+        if expanded_locations and set(prelim_locations) != expanded_locations:
+            extra_graph = await asyncio.to_thread(self.graph_search, list(expanded_locations))
+            # Simple merge by name
+            seen = {g['name'] for g in graph_results}
+            for g in extra_graph:
+                if g['name'] not in seen:
+                    graph_results.append(g)
+
+        # Build context text
+        context_parts = []
+        context_parts.append("=== SEMANTIC SEARCH RESULTS ===\n")
+        for i, result in enumerate(vector_results, 1):
+            meta = result['metadata']
+            context_parts.append(f"{i}. {meta.get('name', 'Unknown')} (Relevance: {result['score']:.3f})")
+            context_parts.append(f"   Type: {meta.get('type', 'N/A')}")
+            if 'city' in meta:
+                context_parts.append(f"   City: {meta['city']}")
+            if 'region' in meta:
+                context_parts.append(f"   Region: {meta['region']}")
+            context_parts.append(f"   Description: {meta.get('description', 'N/A')}")
+            if 'tags' in meta:
+                context_parts.append(f"   Tags: {meta['tags']}")
+            context_parts.append("")
+
+        context_parts.append("\n=== KNOWLEDGE GRAPH CONTEXT ===\n")
+        for i, node in enumerate(graph_results, 1):
+            context_parts.append(f"{i}. {node['name']} ({node['type']})")
+            context_parts.append(f"   Location: {node['location']}")
+            context_parts.append(f"   Description: {node['description']}")
+            if node['connections']:
+                conn_summary = []
+                for conn in node['connections'][:5]:
+                    if conn['node']:
+                        conn_summary.append(f"{conn['node']} ({conn['type']})")
+                if conn_summary:
+                    context_parts.append(f"   Connected to: {', '.join(conn_summary)}")
+            context_parts.append("")
+
+        # Add concise summary
+        summary_text = self.search_summary(vector_results, graph_results)
+        if summary_text:
+            context_parts.append("\n=== SUMMARY ===\n")
+            context_parts.append(summary_text)
+
+        context = "\n".join(context_parts)
+        metadata = {
+            'vector_results_count': len(vector_results),
+            'graph_results_count': len(graph_results),
+            'locations': list(expanded_locations) if expanded_locations else prelim_locations,
+            'top_result_score': vector_results[0]['score'] if vector_results else 0
+        }
+        return context, metadata
     
     def generate_answer(self, query: str, context: str, metadata: Dict) -> str:
         """Generate answer using Gemini"""
@@ -255,7 +401,16 @@ Guidelines:
 - Mention best times to visit when available
 - Be specific and actionable
 - Use a warm, enthusiastic tone
-- If creating multi-day itineraries, ensure logical flow and realistic pacing"""
+- If creating multi-day itineraries, ensure logical flow and realistic pacing
+- Think through the plan step-by-step internally to ensure coherence, but provide only the final polished answer to the user.
+- Prefer concrete recommendations (names, times, travel durations) and avoid generic filler."""
+
+        # Provide a lightweight response outline to improve structure without revealing hidden reasoning
+        outline_hint = (
+            "\nWhen relevant, structure the final answer using concise sections: "
+            "'Overview', 'Day-by-day plan', 'Logistics', 'Food & Stay', 'Tips'. "
+            "Keep bullets short and specific."
+        )
 
         user_prompt = f"""User Query: {query}
 
@@ -265,7 +420,7 @@ Available Context:
 Based on the above context, please provide a comprehensive answer to the user's query. 
 Use specific information from both the semantic search results and the knowledge graph connections."""
 
-        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+        full_prompt = f"{system_prompt}{outline_hint}\n\n{user_prompt}"
 
         try:
             response = self.gemini_model.generate_content(full_prompt)
@@ -294,8 +449,12 @@ Use specific information from both the semantic search results and the knowledge
             print("⚡ Returning cached result")
             return self.query_cache[query]
         
-        # Build context from hybrid search
-        context, metadata = self.build_context(query)
+        # Build context (async path for better latency)
+        try:
+            context, metadata = asyncio.run(self.build_context_async(query))
+        except RuntimeError:
+            # Fallback if already in an event loop
+            context, metadata = self.build_context(query)
         
         # Generate answer
         print("\n🤖 Generating AI response...")
