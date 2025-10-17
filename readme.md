@@ -247,55 +247,78 @@ python hybrid_chat.py
    Plan a trekking adventure in Sapa
    ```
 
-### Sample Interaction
+### Sample Interaction 
 
 ```
+================================================================================
 🌏  HYBRID AI TRAVEL ASSISTANT FOR VIETNAM
 ================================================================================
-🗣️  Enter your travel question: create a romantic 4 day itinerary for Vietnam
+
+🗣️  Enter your travel question: Create a romantic 4 day itinerary for Vietnam
 
 ================================================================================
-🔄 Building hybrid context...
+🔄 Building hybrid context (async)...
 ================================================================================
-🔍 Searching vector database for: 'create a romantic 4 day itinerary for Vietnam'
-   Found 5 similar results
+🔍 Searching vector database for: 'Create a romantic 4 day itinerary for Vietnam'
 🕸️  Querying knowledge graph...
-   Found 15 graph nodes
+   Found 20 graph nodes
+   Found 5 similar results
 
-🤖 Generating AI response...
+=== SUMMARY ===
+Top semantic matches:
+- Hanoi (score 0.92)
+- Halong Bay (score 0.88)
+- Hoi An (score 0.86)
+Top graph nodes:
+- Hanoi (Destination)
+- Halong Bay (Destination)
+- Hoi An (Destination)
 
-⏱️  Total time: 3.21s
+🤖 Generating AI response with Gemini...
+
+⏱️  Total time: 44.68s
 
 ================================================================================
 💬 RESPONSE:
 ================================================================================
-Here's a romantic 4-day Vietnam itinerary:
+Chào bạn! What a wonderful idea to plan a romantic getaway to Vietnam! Based on your request and our knowledge base, here is a dreamy 4‑day itinerary designed for romance in Hoi An, with a nod to Đà Lạt as a future option.
 
-**Day 1: Hanoi - Arrival & Old Quarter**
-- Morning: Arrive in Hanoi, check into Sofitel Legend Metropole
-- Afternoon: Romantic cyclo ride through Old Quarter
-- Evening: Water puppet show followed by dinner at Cha Ca Thang Long
-- Night: Stroll around Hoan Kiem Lake
+Overview
+- Focus on Hoi An’s lantern-lit Ancient Town for a magical couple experience.
 
-**Day 2: Halong Bay - Overnight Cruise**
-- Morning: Transfer to Halong Bay (3 hours)
-- Afternoon: Board Paradise Cruise, explore caves by kayak
-- Evening: Sunset cocktails on deck, romantic dinner
-- Night: Sleep aboard the cruise under the stars
+Best Time to Visit
+- Dry season Feb–May for warm, sunny weather and evening lantern charm.
 
-**Day 3: Hoi An - Ancient Town Magic**
-- Morning: Fly to Da Nang, transfer to Hoi An
-- Afternoon: Check into Anantara Hoi An Resort, explore Ancient Town
-- Evening: Lantern-lit dinner at Yen's Restaurant
-- Night: Release lanterns on Thu Bon River
+Day-by-day plan
+- Day 1: Arrival & Lantern-Lit Romance
+  - Arrive at Da Nang (DAD) → private transfer to Hoi An (~45m)
+  - Settle in, riverside dinner, lantern boat ride on Thu Bon River
+- Day 2: Cultural Charms & Culinary Love
+  - Japanese Covered Bridge, Phung Hung Old House; cooking class + tailoring
+  - Couple’s spa; candlelit dinner away from main streets
+- Day 3: Countryside Serenity & Beach Bliss
+  - Bicycle to Tra Que Vegetable Village; relax at An Bang Beach
+  - Optional riverside fine dining (e.g., Mango Mango)
+- Day 4: Farewell & Cherished Memories
+  - Coffee in Old Town; last tailoring pickup; transfer to DAD
 
-**Day 4: Hoi An - Leisure & Departure**
-- Morning: Couple's cooking class or beach relaxation
-- Afternoon: Custom tailoring or spa treatments
-- Evening: Departure or extend your stay
+Logistics
+- Flights: Fly into Da Nang International Airport (DAD)
+- Transportation: Private car DAD ↔ Hoi An (~45m); walk/cycle inside the town
+- Visa: Check requirements for your nationality well in advance
+
+Food & Stay
+- Accommodation: Anantara Hoi An Resort; The Little Riverside Hoi An; Hotel Royal Hoi An – MGallery
+- Must‑try foods: Cao Lầu, White Rose Dumplings, Cơm Gà, Bánh Mì Phượng, fresh seafood (An Bang)
+
+Tips
+- Embrace the slow pace; time visits around the monthly lantern festival; carry cash for small vendors; bring swimwear
 
 ---
-💡 Answer generated using 5 semantic matches and 15 graph connections.
+💡 Answer generated using 5 semantic matches and 20 graph connections.
+
+================================================================================
+🗣️  Enter your travel question: What are the best activities in Hanoi?
 ```
 
 ## 📊 Evaluation Deliverables
