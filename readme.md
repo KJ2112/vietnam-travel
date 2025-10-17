@@ -317,40 +317,5 @@ Tips
 
 ================================================================================
 🗣️  Enter your travel question: What are the best activities in Hanoi?
-```
 
-## 🎓 Key Improvements Implemented
-
-### ✅ Core Fixes
-- Fixed Pinecone v2+ SDK compatibility
-- Updated OpenAI API to new client format
-- Optimized Neo4j queries with relationships
-
-### ✅ Performance Enhancements
-- Embedding cache (70% cost reduction)
-- Query result cache (5x faster repeated queries)
-- Batch processing for uploads
-
-### ✅ Advanced Features
-- Chain-of-thought prompt engineering
-- Hybrid context fusion algorithm
-- Smart location extraction
-- Search result summarization
-
-### ✅ User Experience
-- Interactive CLI with commands
-- Progress indicators
-- Error handling & graceful degradation
-- Detailed logging
-
-## 📈 Performance Metrics
-
-| Metric | Value |
-|--------|-------|
-| Average Response Time | 2-4 seconds |
-| Cache Hit Rate | ~60% after warm-up |
-| Context Quality | High (vector + graph) |
-| Answer Coherence | 9/10 (subjective) |
-
-```
 
