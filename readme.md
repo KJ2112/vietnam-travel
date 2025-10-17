@@ -197,8 +197,6 @@ Processing 2/35: Halong Bay
 ✅ All done! Check your Pinecone dashboard to verify the upload.
 ```
 
-**⚠️ Important**: Take a screenshot of this output for submission!
-
 ### Step 9: Run the Hybrid Chat
 
 ```bash
