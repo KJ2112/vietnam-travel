@@ -1,6 +1,6 @@
-	# 🧠 Hybrid AI Travel Assistant - Complete Solution
+# 🧠 Hybrid AI Travel Assistant - Complete Solution
 
-A sophisticated AI-powered travel assistant combining vector search (Pinecone), knowledge graphs (Neo4j), and large language models (OpenAI) to provide intelligent travel recommendations for Vietnam.
+A sophisticated AI-powered travel assistant combining vector search (Pinecone), knowledge graphs (Neo4j), and large language models using Ollama for embeddings and Gemini for chat to provide intelligent travel recommendations for Vietnam.
 
 ## 🎯 Overview
 
@@ -27,7 +27,7 @@ User Query
 │     ↓                                │
 │  5. Context Fusion                  │
 │     ↓                                │
-│  6. LLM Generation (OpenAI)         │ ← Intelligent Response
+│  6. LLM Generation (Gemini)         │ ← Intelligent Response
 └─────────────────────────────────────┘
     ↓
 Final Answer
@@ -37,10 +37,11 @@ Final Answer
 
 ### Required Accounts & API Keys
 1. **Pinecone Account** - [Sign up](https://www.pinecone.io/)
-2. **OpenAI API Key** - [Get key](https://platform.openai.com/)
+2. **Google Gemini API Key** - [Get key](https://ai.google.dev/)
 3. **Neo4j Database** - Options:
    - [Neo4j Desktop](https://neo4j.com/download/) (Local)
    - [Neo4j Aura](https://neo4j.com/cloud/aura/) (Cloud)
+4. **Ollama** (Local embeddings server) - [Install](https://ollama.com/)
 
 ### System Requirements
 - Python 3.8 or higher
@@ -91,10 +92,14 @@ Edit `config.py` and add your API keys:
 ```python
 # config.py
 PINECONE_API_KEY = "your-pinecone-api-key-here"
-OPENAI_API_KEY = "your-openai-api-key-here"
+GEMINI_API_KEY = "your-gemini-api-key-here"
 NEO4J_URI = "bolt://localhost:7687"  # or your Neo4j Aura URI
 NEO4J_USERNAME = "neo4j"
 NEO4J_PASSWORD = "your-neo4j-password"
+
+# Embeddings via Ollama (local)
+OLLAMA_BASE_URL = "http://localhost:11434"
+OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"  # 768-dim
 ```
 
 **Alternatively**, use environment variables (recommended):
@@ -102,10 +107,13 @@ NEO4J_PASSWORD = "your-neo4j-password"
 ```bash
 # Create .env file
 PINECONE_API_KEY=your-pinecone-api-key
-OPENAI_API_KEY=your-openai-api-key
+GEMINI_API_KEY=your-gemini-api-key
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=your-password
+# Ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 ```
 
 ### Step 5: Setup Neo4j
@@ -161,7 +169,7 @@ This shows:
 - Sample nodes and relationships
 - Instructions for browser visualization
 
-### Step 8: Upload Embeddings to Pinecone
+### Step 8: Upload Embeddings to Pinecone (Ollama embeddings)
 
 ```bash
 python pinecone_upload.py
@@ -184,7 +192,7 @@ Processing 2/35: Halong Bay
 
 📊 Index Statistics:
    Total vectors: 35
-   Dimension: 1536
+   Dimension: 768
 
 ✅ All done! Check your Pinecone dashboard to verify the upload.
 ```
@@ -404,9 +412,9 @@ pip install --upgrade -r requirements.txt
 - Check URI format: `bolt://localhost:7687`
 - Verify credentials
 
-**4. OpenAI rate limit errors**
+**4. Gemini/LLM errors**
 - Add delays between requests
-- Upgrade OpenAI plan
+- Verify API quota and model availability
 - Use caching (already implemented)
 
 **5. Empty search results**
@@ -430,9 +438,12 @@ if __name__ == "__main__":
 ## 📚 Additional Resources
 
 - [Pinecone Documentation](https://docs.pinecone.io/)
-- [OpenAI API Docs](https://platform.openai.com/docs)
+- [Google Generative AI (Gemini) Docs](https://ai.google.dev/)
+- [Ollama Docs](https://github.com/ollama/ollama)
 - [Neo4j Cypher Manual](https://neo4j.com/docs/cypher-manual/)
 - [RAG Best Practices](https://www.pinecone.io/learn/retrieval-augmented-generation/)
+
+
 
 ## 🤝 Support
 
@@ -455,5 +466,3 @@ Educational project for AI evaluation purposes.
 - [ ] Survey filled
 - [ ] Follow-up questions answered
 - [ ] Code tested end-to-end
-
-**Good luck! 🚀**
