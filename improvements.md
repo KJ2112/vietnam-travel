@@ -285,6 +285,5 @@ def test_pinecone_compatibility():
 
 ---
 
-**Author**: Hybrid AI Travel Assistant Team  
+**Author**: KJ2112
 **Date**: October 2025  
-**Version**: 2.0
